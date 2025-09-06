@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Supernatural Phoning – Activity</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/reset.css" />
+  <link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body>
+  <div id="app" class="app">
+    <header class="app__header vapor-header">
+      <div class="logo-wrap">
+        <h1 class="logo">📱 Supernatural Phoning</h1>
+        <div class="tagline">retro memories • neon dreams • archive vibes</div>
+      </div>
+      <div class="brand-meta">
+        <span class="pill pill--beta">β build</span>
+      </div>
+    </header>
+
+    <!-- Screen containers -->
+    <main id="screen-container" class="screen-container">
+      <!-- Fallback shown only if JS fails to replace it -->
+      <section class="menu js-fallback" style="text-align:center; max-width:640px;">
+        <h2 class="menu__title">Main Menu (Fallback)</h2>
+        <p>If you only see this message and no interactive tiles, the script didn't run.<br>
+        Press Ctrl+Shift+I (or F12) and check the Console for errors.</p>
+      </section>
+    </main>
+
+    <footer class="app__footer">
+      <span id="status">Connecting…</span>
+      <button id="reload-btn" class="btn btn--ghost" hidden>Reload</button>
+    </footer>
+  </div>
+
+  <!-- Basic inline template fragments (could be external) -->
+  <template id="tpl-menu">
+    <div class="menu-layout">
+      <div class="plant plant--left" aria-hidden="true"></div>
+      <section class="menu">
+  <h2 class="menu__title retro-title">Supernatural Phoning</h2>
+        <div class="menu__grid">
+          <!-- You can replace the emoji span with an <img class="menu__icon" src="assets/img/yourimage.png" alt=""> -->
+          <button class="menu__tile" data-action="start-game">
+            <span class="menu__emoji">🎮</span>
+            <span class="menu__label">Start</span>
+          </button>
+          <button class="menu__tile" data-action="how-to">
+            <span class="menu__emoji">❓</span>
+            <span class="menu__label">How To Play</span>
+          </button>
+            <button class="menu__tile" data-action="settings">
+            <span class="menu__emoji">⚙️</span>
+            <span class="menu__label">Settings</span>
+          </button>
+          <button class="menu__tile" data-action="credits">
+            <span class="menu__emoji">👥</span>
+            <span class="menu__label">Credits</span>
+          </button>
+        </div>
+      </section>
+      <div class="plant" aria-hidden="true"></div>
+    </div>
+  </template>
+
+  <template id="tpl-howto">
+    <section class="panel">
+      <h2>How To Play</h2>
+      <p>Describe the objective and controls of your upcoming activity here. Keep it short at first.</p>
+      <button class="btn" data-action="back">⬅ Back</button>
+    </section>
+  </template>
+
+  <template id="tpl-settings">
+    <section class="panel">
+      <h2>Settings</h2>
+      <div class="settings-group">
+        <label>
+          Music Volume
+          <input type="range" min="0" max="1" step="0.01" id="music-volume" />
+        </label>
+      </div>
+      <button class="btn" data-action="back">⬅ Back</button>
+    </section>
+  </template>
+
+  <template id="tpl-credits">
+    <section class="panel">
+      <h2>Credits</h2>
+      <ul class="credits">
+        <li>Your Name – Concept</li>
+        <li>Contributor – Art</li>
+        <li>Contributor – Code</li>
+      </ul>
+      <button class="btn" data-action="back">⬅ Back</button>
+    </section>
+  </template>
+
+  <noscript><div style="padding:1rem; color:#ffb4b4;">JavaScript is disabled; enable it to use the activity.</div></noscript>
+  <script src="assets/js/app.js" defer></script>
+  <script>
+    // Simple watchdog: if the app didn't set the boot flag in 2s, reveal a hint
+    window.__APP_WATCHDOG = setTimeout(() => {
+      if (!window.__APP_BOOTED) {
+        const sc = document.getElementById('screen-container');
+        if (sc && !sc.querySelector('.watchdog-hint')) {
+          const div = document.createElement('div');
+            div.className = 'panel watchdog-hint';
+            div.innerHTML = '<h2>Script Did Not Run</h2>' +
+              '<p>The activity JavaScript did not execute. Possible reasons:</p>' +
+              '<ul style="line-height:1.4; padding-left:1.1rem;">' +
+              '<li>Browser blocked local file module execution</li>' +
+              '<li>Cached old empty file (try hard refresh: Ctrl+F5)</li>' +
+              '<li>A syntax error (see DevTools Console)</li>' +
+              '</ul>' +
+              '<p>Try running through a tiny local server. Example (PowerShell):<br>' +
+              '<code>python -m http.server 8000</code></p>';
+          sc.innerHTML = '';
+          sc.appendChild(div);
+        }
+      }
+    }, 2000);
+  </script>
+  <!-- Inline music manifest fallback (used if fetch() blocked by file://) -->
+  <script id="music-manifest" type="application/json">[
+  { "src": "assets/music/250 Opening Set.mp3", "title": "250 Opening Set", "artist": "Unknown", "cover": "assets/img/covers/250openingset.png" },
+  { "src": "assets/music/Aoi Sangoshou.mp3", "title": "Aoi Sangoshou", "artist": "Unknown", "cover": "assets/img/covers/aoi_sangoshou.png" },
+  { "src": "assets/music/Automatic.mp3", "title": "Automatic", "artist": "Unknown", "cover": "assets/img/covers/automatichaerin.png" },
+  { "src": "assets/music/Best Part by HANNI.mp3", "title": "Best Part", "artist": "HANNI", "cover": "assets/img/covers/bestpart_banner.png" },
+  { "src": "assets/music/Butterflies With U.mp3", "title": "Butterflies With U", "artist": "Unknown", "cover": "assets/img/covers/butterflies_with_u.png" },
+  { "src": "assets/music/Celebrity by NewJeans (IU's Palette).mp3", "title": "Celebrity (IU's Palette)", "artist": "NewJeans", "cover": "assets/img/covers/celebrity_banner.png" },
+  { "src": "assets/music/ceilings by HAERIN.mp3", "title": "ceilings", "artist": "HAERIN", "cover": "assets/img/covers/ceilings_banner.png" },
+  { "src": "assets/music/Cherry.mp3", "title": "Cherry", "artist": "Unknown", "cover": "assets/img/covers/cherryhyein.png" },
+  { "src": "assets/music/Clementine by HANNI.mp3", "title": "Clementine", "artist": "HANNI", "cover": "assets/img/covers/clementime_banner.png" },
+  { "src": "assets/music/Dive by HANNI.mp3", "title": "Dive", "artist": "HANNI", "cover": "assets/img/covers/dive_banner.png" },
+  { "src": "assets/music/ETA + How Sweet + Supernatural Mix.mp3", "title": "ETA + How Sweet + Supernatural Mix", "artist": "Unknown", "cover": "assets/img/covers/etahow_sweetsupernatural.png" },
+  { "src": "assets/music/Falling Behind by MINJI.mp3", "title": "Falling Behind", "artist": "MINJI", "cover": "assets/img/covers/fallingbehind_banner.png" },
+  { "src": "assets/music/Hold It Down.mp3", "title": "Hold It Down", "artist": "Unknown", "cover": "assets/img/covers/hold_it_down.png" },
+  { "src": "assets/music/I Love You 3000 by MINJI.mp3", "title": "I Love You 3000", "artist": "MINJI", "cover": "assets/img/covers/iloveyou3000_banner.png" },
+  { "src": "assets/music/July by DANIELLE.mp3", "title": "July", "artist": "DANIELLE", "cover": "assets/img/covers/july_banner.png" },
+  { "src": "assets/music/Let Her Go by DANIELLE.mp3", "title": "Let Her Go", "artist": "DANIELLE", "cover": "assets/img/covers/lethergo_banner.png" },
+  { "src": "assets/music/Love Lee by HAERIN.mp3", "title": "Love Lee", "artist": "HAERIN", "cover": "assets/img/covers/lovelee_banner.png" },
+  { "src": "assets/music/Odoriko CDTV.mp3", "title": "Odoriko (CDTV)", "artist": "Unknown", "cover": "assets/img/covers/odoriko.png" },
+  { "src": "assets/music/Odoriko.mp3", "title": "Odoriko", "artist": "Unknown", "cover": "assets/img/covers/odorikominji.png" },
+  { "src": "assets/music/once in a moon by HANNI.mp3", "title": "once in a moon", "artist": "HANNI", "cover": "assets/img/covers/onceinamoon_banner.png" },
+  { "src": "assets/music/Part of Your World.mp3", "title": "Part of Your World", "artist": "Unknown", "cover": "assets/img/covers/partofyourworlddani.png" },
+  { "src": "assets/music/Plastic Love.mp3", "title": "Plastic Love", "artist": "Unknown", "cover": "assets/img/covers/plasticlove.png" },
+  { "src": "assets/music/Rainy Days by DANIELLE.mp3", "title": "Rainy Days", "artist": "DANIELLE", "cover": "assets/img/covers/rainydays_banner.png" },
+  { "src": "assets/music/Slow Dancing by HYEIN.mp3", "title": "Slow Dancing", "artist": "HYEIN", "cover": "assets/img/covers/slowdancing_banner.png" },
+  { "src": "assets/music/The Season in the Sun.mp3", "title": "The Season in the Sun", "artist": "Unknown", "cover": "assets/img/covers/theseasonsinthesunhanni.png" }
+]</script>
+  <!-- Music Player Container (overlay bottom-right) -->
+  <div id="music-player" class="music-player music-player--hidden" aria-hidden="true">
+    <div class="mp__glass">
+  <div class="mp__cover"><img id="mp-cover" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGP4BwQACfsD/QqM3UQAAAAASUVORK5CYII=" alt="" aria-hidden="true"></div>
+      <div class="mp__meta">
+        <div class="mp__title" id="mp-title">Loading…</div>
+        <div class="mp__artist" id="mp-artist">—</div>
+        <div class="mp__controls">
+          <button class="mp__btn" data-mp="prev" aria-label="Previous">⏮</button>
+          <button class="mp__btn mp__btn--main" data-mp="play" aria-label="Play/Pause">▶</button>
+          <button class="mp__btn" data-mp="next" aria-label="Next">⏭</button>
+        </div>
+        <div class="mp__bar"><input type="range" id="mp-progress" min="0" max="100" value="0" /></div>
+        <div class="mp__time" id="mp-time">0:00 / 0:00</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
