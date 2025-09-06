@@ -162,6 +162,7 @@ function init() {
   window.__APP_BOOTED = true;
   clearTimeout(window.__APP_WATCHDOG);
   initMusicPlayer();
+  initBackgroundFlyers();
 }
 
 document.addEventListener('DOMContentLoaded', init);
@@ -316,17 +317,30 @@ function updatePlayerUI(resetMeta=false) {
   const track = state.music.list[state.music.idx];
   const titleEl = document.getElementById('mp-title');
   const artistEl = document.getElementById('mp-artist');
-  const coverEl = document.getElementById('mp-cover');
   const playBtn = document.querySelector('[data-mp=play]');
   if (track && resetMeta) {
     titleEl.textContent = track.title;
     artistEl.textContent = track.artist;
-    if (coverEl) coverEl.src = track.cover;
+  // Background image handled via --player-cover CSS variable
   }
-  // Set (or refresh) background image variable independent of resetMeta
+  // Apply cover image directly as background (preload to avoid flash)
   const player = document.querySelector('#music-player .mp__glass');
   if (player && track) {
-    player.style.setProperty('--player-cover', `url("${track.cover}")`);
+    const img = new Image();
+    img.onload = () => {
+      player.style.backgroundImage = `url("${track.cover}")`;
+      // Apply optional horizontal shift if provided in track metadata (pixels or css length)
+      if (track.coverShift) {
+        player.style.setProperty('--cover-shift', typeof track.coverShift === 'number' ? `${track.coverShift}px` : track.coverShift);
+      } else {
+        player.style.removeProperty('--cover-shift');
+      }
+    };
+    img.onerror = () => {
+      player.style.backgroundImage = 'none';
+      player.style.backgroundColor = '#141c28';
+    };
+    img.src = track.cover;
   }
   if (playBtn) playBtn.textContent = state.music.playing ? '⏸' : '▶';
   updateProgress();
@@ -395,3 +409,68 @@ async function extractCoverArt(track) {
 function syncSafeToInt(arr){ return (arr[0]<<21) | (arr[1]<<14) | (arr[2]<<7) | arr[3]; }
 function textFrom(arr){ return Array.from(arr).map(b=>String.fromCharCode(b)).join(''); }
 function readFrameSize(arr){ return (arr[0]<<24) | (arr[1]<<16) | (arr[2]<<8) | arr[3]; }
+
+// ───────────────────────  POWERPUFF FLYING BACKGROUND  ───────────────────────
+const FLYER_ASSETS = [
+  'assets/img/PowerPuff/HanniLoading.png',
+  'assets/img/PowerPuff/MinjiLoading.png',
+  'assets/img/PowerPuff/HaerinLoading.png',
+  'assets/img/PowerPuff/DaniLoading.png',
+  'assets/img/PowerPuff/HyeinLoading.png'
+];
+// Configuration: do not mirror (original GIFs already face travel direction)
+const FLYER_INVERT = false;
+let flyerTimer = null; let flyerCount = 0; const MAX_FLYERS = 4; // fewer simultaneous
+// Effect configuration
+const FLYER_EFFECTS = {
+  trailCount: 2,         // number of trailing afterimages
+  glow: true,            // apply neon glow filter
+  hueRotateChance: 0.25, // 25% chance to hue-shift during flight
+};
+function initBackgroundFlyers(){
+  const container = document.body;
+  function spawnFlyer(){
+  if (flyerCount >= MAX_FLYERS) return scheduleNext();
+  const src = FLYER_ASSETS[Math.floor(Math.random()*FLYER_ASSETS.length)];
+  const img = document.createElement('img');
+  img.src = src;
+  img.alt = '';
+  const scale = 1.6 + Math.random()*0.9; // enlarged for PNG (1.6x - 2.5x base width)
+  const duration = 1.0; // 1 second traverse (reverted)
+  const startY = 12 + Math.random()*70; // keep within middle band
+  const delay = Math.random()*1.2; // small stagger
+  const invert = FLYER_INVERT; // single global orientation choice
+  const glowFilter = FLYER_EFFECTS.glow ? 'drop-shadow(0 0 6px #ff6fe680) drop-shadow(0 0 12px #62ffbe50)' : 'drop-shadow(0 4px 8px #0009)';
+  const hueAnim = Math.random() < FLYER_EFFECTS.hueRotateChance ? `, flyer-hue ${duration}s linear ${delay}s forwards` : '';
+  img.style.cssText = `position:fixed; left:-220px; top:${startY}vh; width:${170*scale}px; height:auto; pointer-events:none; z-index:-2; opacity:0; filter:${glowFilter} brightness(1.05); will-change:transform,opacity,filter; animation:flyer-move ${duration}s linear ${delay}s forwards${hueAnim}; --sx:${invert? -1:1};`;
+  container.appendChild(img); flyerCount++;
+    // Trailing afterimages (clones) - not counted toward flyerCount
+    if (FLYER_EFFECTS.trailCount > 0) {
+      for (let i=1;i<=FLYER_EFFECTS.trailCount;i++) {
+        const t = document.createElement('img');
+        t.src = src; t.alt='';
+        const trailDelay = delay + i*0.02; // slight stagger
+        const trailOpacity = 0.25 / i;
+        t.style.cssText = `position:fixed; left:-220px; top:${startY}vh; width:${170*scale}px; height:auto; pointer-events:none; z-index:-3; opacity:0; filter:blur(${1+i}px) drop-shadow(0 0 4px #ff6fe650); mix-blend-mode:screen; animation:flyer-move ${duration}s linear ${trailDelay}s forwards; --sx:${invert? -1:1};`;
+        // Fade opacity via animation events (CSS alt approach would need extra keyframes)
+        t.addEventListener('animationstart',()=>{ t.style.transition='opacity .25s'; t.style.opacity=trailOpacity; });
+        t.addEventListener('animationend',()=> t.remove());
+        container.appendChild(t);
+      }
+    }
+    img.addEventListener('animationend', () => { img.remove(); flyerCount--; });
+    scheduleNext();
+  }
+  function scheduleNext(){
+  const nextIn = 3000 + Math.random()*5000; // 3s - 8s (adjusted for faster traversal)
+    flyerTimer = setTimeout(spawnFlyer, nextIn);
+  }
+  // Preload assets quickly
+  FLYER_ASSETS.forEach(src => { const i = new Image(); i.src = src; });
+  scheduleNext();
+}
+// Keyframes injected via JS-friendly CSS if not present
+const flyerAnimCSS = `@keyframes flyer-move { 0% { opacity:0; transform:translateX(0) scaleX(var(--sx,1)); } 15% { opacity:1; } 85% { opacity:1; } 100% { opacity:0; transform:translateX(calc(100vw + 400px)) scaleX(var(--sx,1)); } }`;
+if (!document.querySelector('#flyer-anim-style')){
+  const st = document.createElement('style'); st.id='flyer-anim-style'; st.textContent = flyerAnimCSS + `\n@keyframes flyer-hue { 0% { filter:hue-rotate(0deg); } 100% { filter:hue-rotate(360deg); } }`; document.head.appendChild(st);
+}
