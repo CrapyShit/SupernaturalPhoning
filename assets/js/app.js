@@ -70,7 +70,7 @@ function buildMenu() {
     const action = btn.dataset.action;
     switch (action) {
       case 'start-game':
-        showHowToTemporary(); // placeholder until real game screen
+        navigate('graph');
         break;
       case 'how-to':
         showPanel('tpl-howto');
@@ -128,9 +128,43 @@ function navigate(screenId) {
     case 'menu':
       mount('menu', buildMenu());
       break;
+    case 'graph':
+      mount('graph', buildGraphScreen());
+      break;
     default:
       console.warn('Unknown screen', screenId);
   }
+}
+
+function buildGraphScreen(){
+  const wrap = document.createElement('div');
+  wrap.className = 'graph-screen';
+  wrap.style.cssText = 'position:relative; width:100%; height:100%; display:flex; flex-direction:column; gap:8px;';
+
+  const toolbar = document.createElement('div');
+  toolbar.style.cssText = 'display:flex; align-items:center; gap:8px; padding:8px;'
+    + 'background:linear-gradient(90deg, rgba(20,22,30,.7), rgba(20,22,30,.35));'
+    + 'border:1px solid rgba(255,255,255,0.08); border-radius:12px; margin:6px;';
+  const backBtn = document.createElement('button');
+  backBtn.className = 'btn';
+  backBtn.textContent = '⬅ Back';
+  backBtn.addEventListener('click', ()=> navigate('menu'));
+  const title = document.createElement('div');
+  title.textContent = 'Archive Graph';
+  title.style.cssText = 'color:#fff; opacity:.85; font-weight:600; letter-spacing:.5px; margin-left:6px;';
+  toolbar.appendChild(backBtn);
+  toolbar.appendChild(title);
+
+  const frame = document.createElement('iframe');
+  frame.src = 'horizontal-graph.html';
+  frame.title = 'Archive Graph';
+  frame.loading = 'eager';
+  frame.style.cssText = 'flex:1 1 auto; width:100%; height:calc(100% - 0px); border:0; border-radius:14px;'
+    + 'background:#0f1115; box-shadow:0 10px 28px #0008 inset, 0 2px 16px #0006;';
+
+  wrap.appendChild(toolbar);
+  wrap.appendChild(frame);
+  return wrap;
 }
 
 // (Optional) Future: Discord Embedded App SDK placeholder
