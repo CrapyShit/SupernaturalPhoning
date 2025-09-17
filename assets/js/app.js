@@ -142,9 +142,9 @@ function buildGraphScreen(){
   wrap.style.cssText = 'position:relative; width:100%; height:100%; display:flex; flex-direction:column; gap:8px;';
 
   const toolbar = document.createElement('div');
-  toolbar.style.cssText = 'display:flex; align-items:center; gap:8px; padding:8px;'
+  toolbar.style.cssText = 'position:absolute; top:10px; left:50%; transform:translateX(-50%); display:flex; align-items:center; gap:8px; padding:8px 12px;'
     + 'background:linear-gradient(90deg, rgba(20,22,30,.7), rgba(20,22,30,.35));'
-    + 'border:1px solid rgba(255,255,255,0.08); border-radius:12px; margin:6px;';
+    + 'border:1px solid rgba(255,255,255,0.08); border-radius:12px; margin:0; z-index:2;';
   const backBtn = document.createElement('button');
   backBtn.className = 'btn';
   backBtn.textContent = '⬅ Back';
@@ -159,7 +159,7 @@ function buildGraphScreen(){
   frame.src = 'horizontal-graph.html';
   frame.title = 'Archive Graph';
   frame.loading = 'eager';
-  frame.style.cssText = 'flex:1 1 auto; width:100%; height:calc(100% - 0px); border:0; border-radius:14px;'
+  frame.style.cssText = 'flex:1 1 auto; width:100%; height:100%; border:0; border-radius:14px;'
     + 'background:#0f1115; box-shadow:0 10px 28px #0008 inset, 0 2px 16px #0006;';
 
   wrap.appendChild(toolbar);

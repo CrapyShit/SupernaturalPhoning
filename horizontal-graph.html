@@ -14,7 +14,7 @@
   }
   #toolbar button { background:#171a20; color:#e5e7eb; border:1px solid #2a2f3a; border-radius:8px; padding:6px 10px; font-size:12px; cursor:pointer; }
   #toolbar button:hover { background:#1d222a; }
-  .hint { position: fixed; top: 60px; left:12px; z-index:3; font-size:12px; color:#aab2c0; }
+  /* Removed hint overlay */
 </style>
 </head>
 <body>
@@ -22,8 +22,6 @@
   <button id="fitBtn">Fit</button>
   <button id="resetBtn">Reset</button>
 </div>
-<div class="hint">Drag empty space = pan • Wheel = zoom • Click a <b>channel</b> to expand/collapse Years→Months • Keys: F (fit), 0 (reset)</div>
-
 <canvas id="graph" tabindex="0"></canvas>
 
 <script>
@@ -405,6 +403,7 @@ function fitView(pad=90){
   scale=s; tx=(w - (minX+maxX)*s)/2; ty=(h - (minY+maxY)*s)/2; draw();
 }
 function resetView(){ scale=1; tx=canvas.clientWidth/2; ty=canvas.clientHeight/2; draw(); }
+function initialCenterZoom(){ scale=1.6; tx=canvas.clientWidth/2; ty=canvas.clientHeight/2; draw(); }
 
 /* ================== DRAW ================== */
 function drawGrid(){
@@ -605,7 +604,8 @@ function loadArchive(){
     buildBase(raw);
     layout();
     resize();
-    setTimeout(()=>fitView(), 0);
+    setTimeout(()=>initialCenterZoom(), 0);
+    ensureAnimLoop();
   }catch(err){
     console.error('Failed to load archive JSON:', err);
     alert('Failed to load archive JSON (embedded).');
