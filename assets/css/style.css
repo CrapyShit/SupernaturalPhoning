@@ -42,6 +42,8 @@ body::after { /* subtle scanline/noise overlay */
 /* Add a separate gentle vignette above background image */
 .bg-vignette { position:fixed; inset:0; pointer-events:none; z-index:-3; background:radial-gradient(circle at 50% 60%, #1a2034aa 0%, #0b0f1860 55%, #05070c 85%); }
 body.loading { opacity:.3; filter:grayscale(.4); }
+.flyer-layer { position:fixed; inset:0; z-index:-2; pointer-events:none; overflow:hidden; }
+.flyer-layer img, .flyer-layer video { position:absolute; top:0; left:0; }
 .app { min-height:100dvh; display:flex; flex-direction:column; }
 .app__header, .app__footer { padding:12px 20px; background:linear-gradient(90deg,#121b2a80,#0c0f1780 60%); backdrop-filter:blur(14px) saturate(160%); border-bottom:1px solid #1c2435; }
 .app__footer { border-top:1px solid #222; border-bottom:none; margin-top:auto; font-size:.75rem; display:flex; gap:1rem; align-items:center; }

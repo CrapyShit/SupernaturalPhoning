@@ -1,0 +1,617 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>NJZ Archive — Horizontal Graph</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+<style>
+  html,body { height:100%; margin:0; background:#0f1115; color:#e5e7eb; font-family: 'Press Start 2P', 'VT323', Fira Mono, monospace, system-ui; }
+  #graph { display:block; width:100vw; height:100vh; outline:none; }
+  #toolbar {
+    position: fixed; top:12px; left:12px; z-index:3; display:flex; gap:8px;
+    background: rgba(16,18,24,.9); border:1px solid #2a2f3a; border-radius: 12px; padding:8px 10px; backdrop-filter: blur(6px);
+  }
+  #toolbar button { background:#171a20; color:#e5e7eb; border:1px solid #2a2f3a; border-radius:8px; padding:6px 10px; font-size:12px; cursor:pointer; }
+  #toolbar button:hover { background:#1d222a; }
+  .hint { position: fixed; top: 60px; left:12px; z-index:3; font-size:12px; color:#aab2c0; }
+</style>
+</head>
+<body>
+<div id="toolbar">
+  <button id="fitBtn">Fit</button>
+  <button id="resetBtn">Reset</button>
+</div>
+<div class="hint">Drag empty space = pan • Wheel = zoom • Click a <b>channel</b> to expand/collapse Years→Months • Keys: F (fit), 0 (reset)</div>
+
+<canvas id="graph" tabindex="0"></canvas>
+
+<script>
+/* ================== CONFIG ================== */
+// Embedded JSON data for testing (full content)
+const ARCHIVE_DATA = {"guild":{"name":"NJZ Archive","id":1265845477832659006},"generated_at":"2025-09-17T09:13:55.679103+00:00","categories":[{"label":"NJZ","categories":[{"id":1336437453581455401,"name":"👖 Group (NJZ)","missing":false,"channels":[{"id":1336437759048679596,"name":"📷posts","years":[2024,2025],"months":{"2024":[12],"2025":[1,2,3]}},{"id":1336437730397257829,"name":"📚stories","years":[2024,2025],"months":{"2024":[12],"2025":[1,2,3,4]}},{"id":1336437920713937040,"name":"🎥lives","years":[2024,2025],"months":{"2024":[12],"2025":[2,3]}},{"id":1317629609830912101,"name":"📁miscellaneous","years":[2024,2025],"months":{"2024":[12],"2025":[2]}}]},{"id":1336385706334879896,"name":"🧸 Minji (NJZ)","missing":false,"channels":[{"id":1336375587471888444,"name":"📷posts","years":[2024,2025],"months":{"2024":[12],"2025":[1,2,3]}},{"id":1336375123485130783,"name":"📚stories","years":[2024,2025],"months":{"2024":[1,12],"2025":[1,2,3,4,5,6]}},{"id":1336438083348070410,"name":"🎥lives","years":[2025],"months":{"2025":[1,2]}}]},{"id":1336386239359619103,"name":"🦦 Hanni (NJZ)","missing":false,"channels":[{"id":1336375671055843328,"name":"📷posts","years":[2024,2025],"months":{"2024":[12],"2025":[1,2,3]}},{"id":1336375177096986676,"name":"📚stories","years":[2024,2025],"months":{"2024":[12],"2025":[1,2,3,4,5,6]}},{"id":1336438050347028510,"name":"🎥lives","years":[2025],"months":{"2025":[1,2,5]}}]},{"id":1336386411418353674,"name":"🐶 Danielle (NJZ)","missing":false,"channels":[{"id":1336375730019500093,"name":"📷posts","years":[2024,2025],"months":{"2024":[12],"2025":[1,2,3,4]}},{"id":1336375347775803486,"name":"📚stories","years":[2024,2025],"months":{"2024":[12],"2025":[1,2,3,4,5]}},{"id":1336438119746244769,"name":"🎥lives","years":[2025],"months":{"2025":[1,2,3,4]}}]},{"id":1336387090426101874,"name":"🐱 Haerin (NJZ)","missing":false,"channels":[{"id":1336375830691053568,"name":"📷posts","years":[2024,2025],"months":{"2024":[12],"2025":[1,2,3]}},{"id":1336375460833267732,"name":"📚stories","years":[2024,2025],"months":{"2024":[12],"2025":[1,2,4,5]}},{"id":1336437952745574470,"name":"🎥lives","years":[2025],"months":{"2025":[1,2,3]}}]},{"id":1336387274962899005,"name":"🐹 Hyein (NJZ)","missing":false,"channels":[{"id":1336375869198831738,"name":"📷posts","years":[2024,2025],"months":{"2024":[12],"2025":[1,2]}},{"id":1336375490793046170,"name":"📚stories","years":[2024,2025],"months":{"2024":[12],"2025":[1,2,3,4,5]}},{"id":1336437997717033121,"name":"🎥lives","years":[2025],"months":{"2025":[1,2]}}]}]},{"label":"NewJeans & Phoning","categories":[{"id":1309135902567829505,"name":"💼 NewJeans SNS","missing":false,"channels":[{"id":1309135926030635068,"name":"📷instagram","years":[2022,2023,2024,2025],"months":{"2022":[7,8,9,10,11,12],"2024":[1,2,3,4,5,6,7,8,9,10,11,12],"2023":[1,2,3,4,5,6,7,8,9,10,11,12],"2025":[1,2,3,4,5,7,9]}},{"id":1309137347023081503,"name":"📰twitter","years":[2022,2023,2024],"months":{"2022":[9,10,11,12],"2023":[1,2,3,4,5,6,7,8,9,10,11,12],"2024":[1,2,3,4,5,6,7,8,9,10]}},{"id":1309137412890296401,"name":"🎶tiktok","years":[2022,2023,2024,2025],"months":{"2022":[7,8,9,10,11,12],"2023":[1,2,3,4,5,6,7,8,9,10,11,12],"2024":[1,2,3,4,5,6,7,8,9,10,11],"2025":[4,5,7]}},{"id":1312582027089809548,"name":"📁miscellaneous","years":[2022,2023,2024],"months":{"2024":[7,12],"2022":[11],"2023":[11]}}]},{"id":1265944408977575936,"name":"👖 Group (Phoning)","missing":false,"channels":[{"id":1265957062656135240,"name":"📷album","years":[2022,2023,2024],"months":{"2022":[7,8,9,10,11,12],"2023":[1,2,4,5,6,7,8,9,10,11,12],"2024":[1,2,3,5,6,7,8,10,11]}},{"id":1265957997159383100,"name":"💬chat","years":[2022,2023,2024],"months":{"2022":[7,8,9,10,11,12],"2023":[1,3,5,7,9,12],"2024":[5,7,9,10,11]}},{"id":1266662788634509383,"name":"📅calendar","years":[2022,2023,2024],"months":{"2022":[7,8,10,12],"2023":[1,2,3,4,5,7,8,10],"2024":[3,4,5,6,7,10]}},{"id":1265957947109019699,"name":"🎤podcast","years":[2024],"months":{"2024":[6,7,9,10,12]}},{"id":1265957106159456327,"name":"🐰🎬","years":[2023,2024],"months":{"2023":[4,5,6,7,8,9,10,11,12],"2024":[1,2,3,4,7,10,11]}},{"id":1265957124668788786,"name":"🐰📷","years":[2022,2023,2024],"months":{"2022":[9,10,11,12],"2023":[1,3,5,6,7,10,12],"2024":[1,2,3,4,5,6,7,8,10,11]}},{"id":1265957140682641469,"name":"🐰✏","years":[2022,2023,2024],"months":{"2022":[9,10,11],"2023":[1,2,4,10],"2024":[3,7]}},{"id":1265957151885754439,"name":"🐰🌕","years":[2022,2024],"months":{"2022":[9],"2024":[2,9]}},{"id":1265957003369385994,"name":"newjeans-day","years":[2022],"months":{"2022":[7]}}]},{"id":1265944443404681217,"name":"🧸 Minji (Phoning)","missing":false,"channels":[{"id":1265954187070406707,"name":"📷album","years":[2022,2023,2024],"months":{"2022":[7,8,9,10,11,12],"2023":[1,2,3,4,5,6,7,8,9,10,11,12],"2024":[1,2,3,4,5,6,7,8,10,11]}},{"id":1265954220503339100,"name":"💬chat","years":[2022,2023,2024],"months":{"2022":[12],"2023":[1,2,3,4,5,6,7,8,9,10,11,12],"2024":[1,2,3,4,5,6,7,8,9,10,11]}},{"id":1265954264703045714,"name":"📅calendar","years":[2022,2023,2024],"months":{"2022":[7,8,9,10,11,12],"2023":[1,2,3,4,5,6,7,8,9,10,11,12],"2024":[1,2,3,4,5,6,7,8,9,10,11]}},{"id":1265954278418284675,"name":"🎤podcast","years":[2024],"months":{"2024":[6,8,9,11,12]}}]},{"id":1265944725437943860,"name":"🦦 Hanni (Phoning)","missing":false,"channels":[{"id":1265956584325124207,"name":"📷album","years":[2022,2023,2024],"months":{"2022":[7,8,9,10,11,12],"2023":[1,2,3,4,5,6,7,8,9,10,11,12],"2024":[1,2,3,4,5,6,7,8,10,11]}},{"id":1265956607448191047,"name":"💬chat","years":[2022,2023,2024],"months":{"2022":[12],"2023":[1,2,3,4,5,6,7,8,9,10,12],"2024":[1,2,3,5,6,7,8,9,10,11]}},{"id":1265956635902349383,"name":"📅calendar","years":[2022,2023,2024],"months":{"2022":[7,8,9,10,11,12],"2023":[1,2,3,4,5,6,7,8,9,10,11,12],"2024":[1,2,3,4,5,6,7,9,10,11]}},{"id":1265956657918115901,"name":"🎤podcast","years":[2024],"months":{"2024":[5,6,8,9,11]}}]},{"id":1265944803019849749,"name":"🐶 Danielle (Phoning)","missing":false,"channels":[{"id":1265956698409926656,"name":"📷album","years":[2022,2023,2024],"months":{"2022":[7,8,9,10,11,12],"2023":[1,2,3,4,5,6,7,8,9,10,11,12],"2024":[1,2,3,4,5,6,7,8,9,10,11]}},{"id":1265956751677722715,"name":"💬chat","years":[2022,2023,2024],"months":{"2022":[12],"2023":[1,2,3,4,5,6,7,8,9,10,11,12],"2024":[2,3,4,5,6,7,8,9,10,11]}},{"id":1265956814315458583,"name":"📅calendar","years":[2022,2023,2024],"months":{"2022":[7,8,9,10,11,12],"2023":[1,2,3,4,5,6,7,8,9,10,11,12],"2024":[2,4,6,7,8,10,11]}},{"id":1265956868187230301,"name":"🎤podcast","years":[2024],"months":{"2024":[5,7,8,10,11]}}]},{"id":1265944852558905365,"name":"🐱 Haerin (Phoning)","missing":false,"channels":[{"id":1265956713194852463,"name":"📷album","years":[2022,2023,2024],"months":{"2022":[7,8,9,10,11,12],"2023":[1,2,3,4,5,6,7,8,9,10,11,12],"2024":[1,2,3,4,5,6,7,8,11]}},{"id":1265956765854466078,"name":"💬chat","years":[2022,2023,2024],"months":{"2022":[12],"2023":[1,4,7,9,11],"2024":[7,8,9,10,11]}},{"id":1265956831596122174,"name":"📅calendar","years":[2022,2023,2024],"months":{"2022":[7,8,9,10,11,12],"2023":[1,2,3,4,5,6,7,8,9,10],"2024":[2,4,7]}},{"id":1265956884242890752,"name":"🎤podcast","years":[2024],"months":{"2024":[5,7,8,10,11]}}]},{"id":1265944904098386001,"name":"🐹 Hyein (Phoning)","missing":false,"channels":[{"id":1265956729884119151,"name":"📷album","years":[2022,2023,2024],"months":{"2022":[7,8,9,10,11,12],"2023":[1,2,3,4,5,6,7,8,9,10,11,12],"2024":[1,2,3,4,5,6,8]}},{"id":1265956780261904395,"name":"💬chat","years":[2022,2023,2024],"months":{"2022":[12],"2023":[1,2,3,5,6,8,9,12],"2024":[5,6,8,9,10,11]}},{"id":1265956852215316502,"name":"📅calendar","years":[2022,2023,2024],"months":{"2022":[7,8,9,10,11,12],"2023":[1,2,3,4,5,6,7,8,9,10,11,12],"2024":[1,2,5,8]}},{"id":1265956899883454467,"name":"🎤podcast","years":[2024],"months":{"2024":[6,7,9,10,12]}}]}]}]};
+const NJZ_LABEL_MATCH = 'NJZ';         // labels containing this go to the LEFT
+const GAP_X = 400;                     // column spacing (wider to push categories outward)
+const CENTER_GAP_X = 380;              // special wider gap from root to label columns
+const GAP_Y = 60;                      // default row spacing
+const CATEGORY_GAP = 220;              // vertical gap between categories under a label
+const CHANNEL_GAP = 110;               // vertical gap between channels under a category
+const CHILD_GAP = 60;                  // vertical gap for years/months
+const COLORS = {
+  // Vaporwave palette
+  bgGradient1: '#1a0033', // deep purple
+  bgGradient2: '#0f1115', // dark blue
+  grid: 'rgba(255,255,255,0.07)',
+  link: '#8afff7',
+  linkHL: '#ff8af7',
+  nodeGradient1: '#ff8af7', // neon pink
+  nodeGradient2: '#8afff7', // neon cyan
+  nodeStroke: '#fff',
+  nodeHL: '#fff1',
+  nodeStrokeHL: '#fff',
+  text: '#fffbe7',
+  leftStripe:'#ffd781',
+  rightStripe:'#8ab4ff',
+  nodeGlow: '#ff8af7',
+  nodeGlowHL: '#fff',
+};
+const NODE = { padX:14, padY:8, radius:12, baseW:160, baseH:48, font:'11px "Press Start 2P", "VT323", "Fira Mono", monospace, system-ui' };
+const GLITCH_BOOST = 1.6; // amplify holographic twitch magnitude
+
+/* ================== CANVAS SETUP ================== */
+const canvas = document.getElementById('graph');
+const ctx = canvas.getContext('2d');
+function resize(){
+  const dpr = Math.max(1, devicePixelRatio || 1);
+  canvas.width = Math.floor(canvas.clientWidth * dpr);
+  canvas.height= Math.floor(canvas.clientHeight * dpr);
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  draw();
+}
+new ResizeObserver(resize).observe(canvas);
+
+let scale=1, tx=0, ty=0, last={x:0,y:0}, panning=false, draggingNode=null, dragOff={x:0,y:0}, activeId=null;
+function toWorld(mx,my){ return { x:(mx - tx)/scale, y:(my - ty)/scale }; }
+function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
+
+/* ================== DATA STRUCTS ================== */
+const nodes=[], links=[], byId=new Map();
+let rafId=null;
+let linkFlow=true, linkTime=0, lastTickTime=0;
+function easeOutCubic(t){ return 1 - Math.pow(1-t, 3); }
+function ensureAnimLoop(){ if(rafId==null){ rafId = requestAnimationFrame(tick); } }
+function tick(){
+  const now=performance.now();
+  const dt = lastTickTime ? (now - lastTickTime) : 0;
+  lastTickTime = now;
+  if (linkFlow) linkTime += dt;
+  let any=false, anyGlitch=false;
+  for (const n of nodes){
+    if (!n._anim) continue;
+    any=true;
+    const {start,dur,from,to,onEnd} = n._anim;
+    const t = Math.min(1, (now - start)/dur);
+    const k = easeOutCubic(t);
+    n.x = from.x + (to.x - from.x)*k;
+    n.y = from.y + (to.y - from.y)*k;
+    n.opacity = (from.o ?? 1) + ((to.o ?? 1) - (from.o ?? 1))*k;
+    if (t>=1){
+      const cb = onEnd; n._anim = null;
+      if (typeof cb === 'function') cb();
+    }
+  }
+  for (const n of nodes){
+    if (!n._glitch) continue;
+    const g = n._glitch;
+    const total = g.dur + (g.tail || 0);
+    const elapsed = now - g.start;
+    if (elapsed >= total){ n._glitch = null; }
+    else { anyGlitch = true; }
+  }
+  draw();
+  if (any || anyGlitch || linkFlow){ rafId = requestAnimationFrame(tick); } else { rafId=null; }
+}
+
+function hashString(s){ let h=0; for(let i=0;i<s.length;i++){ h=((h<<5)-h) + s.charCodeAt(i); h|=0; } return (h>>>0); }
+function startGlitch(node, dur=220, intensity=6, tail=300){ if (!node) return; node._glitch = { start: performance.now(), dur, intensity, seed: hashString(String(node.id||'')), tail }; ensureAnimLoop(); }
+function measure(label){ ctx.font = NODE.font; const m = ctx.measureText(label); return Math.max(NODE.baseW, m.width + NODE.padX*2); }
+function addNode(obj){
+  if (byId.has(obj.id)) return byId.get(obj.id);
+  // Manually enlarge certain nodes for long labels
+  let customW = null;
+  // Top-level label nodes
+  if (obj.label === 'NewJeans & Phoning' || obj.label === 'NJZ') customW = 320;
+  // Children of NewJeans & Phoning (categories)
+  if (obj.parentId && (obj.parentId.includes('R:') && obj.label.length > 12)) customW = 260;
+  // Children of NJZ (categories)
+  if (obj.parentId && (obj.parentId.includes('L:') && obj.label.length > 12)) customW = 260;
+  // Children of NJZ (channels)
+  if (obj.type === 'category' && obj.label.length > 12) customW = 260;
+  obj.w = customW || measure(obj.label);
+  obj.h = NODE.baseH;
+  obj.opacity = obj.opacity==null ? 1 : obj.opacity;
+  nodes.push(obj); byId.set(obj.id,obj); return obj;
+}
+function addLink(a,b){ if(!links.some(L=>L.a===a.id && L.b===b.id)) links.push({a:a.id, b:b.id}); }
+
+function removeNodeAndLinks(node){
+  const id = typeof node==='string'? node : node.id;
+  const idx = nodes.findIndex(n=>n.id===id);
+  if (idx>=0){ nodes.splice(idx,1); }
+  byId.delete(id);
+  for (let i=links.length-1;i>=0;i--){ if (links[i].a===id || links[i].b===id) links.splice(i,1); }
+}
+
+function getColX(){
+  return { center:0, left:{1:-GAP_X,2:-GAP_X*2,3:-GAP_X*3,4:-GAP_X*4,5:-GAP_X*5}, right:{1:GAP_X,2:GAP_X*2,3:GAP_X*3,4:GAP_X*4,5:GAP_X*5} };
+}
+
+function computeChildTargets(ch){
+  const colX = getColX();
+  const side = ch.side;
+  const years = nodes.filter(n=>n.type==='year' && n.parentId===ch.id);
+  const yearStacks = years.map(yNode=>{
+    const months = nodes
+      .filter(m=>m.type==='month' && m.parentId===yNode.id)
+      .sort((a,b)=> Number(a.label) - Number(b.label));
+    const groupSpan = months.length > 1 ? (months.length - 1) * CHILD_GAP : 0;
+    return { yNode, months, groupSpan };
+  });
+  const totalSpan = yearStacks.reduce((s,ys)=> s + ys.groupSpan, 0) + Math.max(0, (yearStacks.length - 1)) * CHILD_GAP;
+  let topY = ch.y - totalSpan/2;
+  const res=[];
+  for (const ys of yearStacks){
+    const yearY = topY + ys.groupSpan/2;
+    res.push({ node: ys.yNode, x: colX[side][4], y: yearY });
+    const mCount = ys.months.length;
+    for (let i=0;i<mCount;i++){
+      const m = ys.months[i];
+      const offset = (i - (mCount - 1)/2) * CHILD_GAP;
+      res.push({ node: m, x: colX[side][5], y: yearY + offset });
+    }
+    topY += ys.groupSpan + CHILD_GAP;
+  }
+  return res;
+}
+
+/* ================== BUILD (root→labels→categories→channels) ================== */
+function buildBase(raw){
+  nodes.length=0; links.length=0; byId.clear();
+
+  const root = addNode({ id:'root', label:(raw.guild?.name || 'Archive'), level:0, side:'center', type:'root', x:0, y:0 });
+
+  const leftGroups = [], rightGroups = [];
+  (raw.categories || []).forEach(g=>{
+    const isLeft = String(g.label||'').toLowerCase().includes(NJZ_LABEL_MATCH.toLowerCase());
+    (isLeft ? leftGroups : rightGroups).push(g);
+  });
+
+  const leftLabelNodes  = leftGroups.map((g,i)=> addNode({ id:`L:${i}:${g.label}`, label:g.label, level:1, side:'left',  type:'label', group:g }));
+  const rightLabelNodes = rightGroups.map((g,i)=> addNode({ id:`R:${i}:${g.label}`, label:g.label, level:1, side:'right', type:'label', group:g }));
+  leftLabelNodes.forEach(n=>addLink(root,n));
+  rightLabelNodes.forEach(n=>addLink(root,n));
+
+  function addSide(side,labelNodes){
+    labelNodes.forEach(ln=>{
+      (ln.group.categories || []).forEach(cat=>{
+        const cNode = addNode({ id:`cat:${cat.id}`, label:cat.name, level:2, side, type:'category', parentId:ln.id, cat });
+        addLink(ln, cNode);
+        (cat.channels || []).forEach(ch=>{
+          const chNode = addNode({ id:`ch:${ch.id}`, label:ch.name, level:3, side, type:'channel', parentId:cNode.id, ch, expanded:false });
+          addLink(cNode, chNode);
+        });
+      });
+    });
+  }
+  addSide('left', leftLabelNodes);
+  addSide('right', rightLabelNodes);
+}
+
+/* ================== EXPAND/COLLAPSE (sorted years↑, months 01..12) ================== */
+function toggleExpandChannel(chNode){
+  const side = chNode.side;
+  const colX = getColX();
+  // Collapse other expanded channels on the same side with animation
+  nodes.filter(n => n.type === 'channel' && n.side === side && n !== chNode && n.expanded).forEach(otherCh => {
+    otherCh.expanded = false;
+    const years = nodes.filter(n=>n.type==='year' && n.parentId===otherCh.id);
+    const months = nodes.filter(n=>n.type==='month' && years.some(y=>y.id===n.parentId));
+    const toRemove = [...years, ...months];
+    toRemove.forEach(n=>{
+      startGlitch(n, 700, 8, 400);
+      n._anim = { start: performance.now(), dur: 260, from: {x:n.x, y:n.y, o:n.opacity??1}, to: {x: otherCh.x + (otherCh.side==='right'? 40 : -40), y: otherCh.y, o:0}, onEnd: ()=> removeNodeAndLinks(n) };
+    });
+  });
+
+  const expanding = !chNode.expanded;
+  chNode.expanded = expanding;
+
+  // If collapsing current channel: animate existing children out, no relayout
+  if (!expanding){
+    const years = nodes.filter(n=>n.type==='year' && n.parentId===chNode.id);
+    const months = nodes.filter(n=>n.type==='month' && years.some(y=>y.id===n.parentId));
+    const toRemove = [...years, ...months];
+    toRemove.forEach(n=>{
+      startGlitch(n, 700, 8, 400);
+      n._anim = { start: performance.now(), dur: 260, from: {x:n.x, y:n.y, o:n.opacity??1}, to: {x: chNode.x + (chNode.side==='right'? 40 : -40), y: chNode.y, o:0}, onEnd: ()=> removeNodeAndLinks(n) };
+    });
+    ensureAnimLoop();
+    return;
+  }
+
+  // Expanding current channel: create year/month nodes at channel position with 0 opacity, then animate to targets
+  const years = Array.from(new Set(chNode.ch.years || [])).sort((a,b)=>a-b);
+  years.forEach(yr=>{
+    const yNode = addNode({ id:`yr:${chNode.id}:${yr}`, label:String(yr), level:4, side:chNode.side, type:'year', parentId:chNode.id, parentChain:chNode.id, x:chNode.x, y:chNode.y, opacity:0 });
+    addLink(chNode, yNode);
+    const arr = (chNode.ch.months && chNode.ch.months[String(yr)]) ? chNode.ch.months[String(yr)] : [];
+    const months = Array.from(new Set(arr)).sort((a,b)=>a-b); // unique + ascending
+    months.forEach(m=>{
+      const mNode = addNode({ id:`mo:${chNode.id}:${yr}:${m}`, label:String(m).padStart(2,'0'), level:5, side:chNode.side, type:'month', parentId:yNode.id, parentChain:chNode.id, x:chNode.x, y:chNode.y, opacity:0 });
+      addLink(yNode, mNode);
+    });
+  });
+
+  // Compute targets based on current channel position (no relayout)
+  const targets = computeChildTargets(chNode);
+  const now = performance.now();
+  for (const t of targets){
+    const n = t.node;
+    n._anim = { start: now, dur: 260, from: {x:n.x, y:n.y, o:n.opacity??0}, to: {x:t.x, y:t.y, o:1} };
+    startGlitch(n, 750, 9, 500);
+  }
+  startGlitch(chNode, 700, 7, 400);
+  ensureAnimLoop();
+}
+
+/* ================== LAYOUT (horizontal, orthogonal links) ================== */
+function layout() {
+  const colX = { center:0, left:{1:-GAP_X,2:-GAP_X*2,3:-GAP_X*3,4:-GAP_X*4,5:-GAP_X*5}, right:{1:GAP_X,2:GAP_X*2,3:GAP_X*3,4:GAP_X*4,5:GAP_X*5} };
+  const cols = { left:{1:[],2:[],3:[],4:[],5:[]}, right:{1:[],2:[],3:[],4:[],5:[]}, center:[] };
+  nodes.forEach(n=>{ if(n.side==='center') cols.center.push(n); else cols[n.side][n.level].push(n); });
+
+  function sortCol(a){ a.sort((x,y)=>{ const px=x.parentId||'', py=y.parentId||''; if(px!==py) return px.localeCompare(py); return x.label.localeCompare(y.label); }); }
+  cols.center.sort((a,b)=>a.label.localeCompare(b.label));
+  ['left','right'].forEach(s=>{ for(let L=1;L<=5;L++) sortCol(cols[s][L]); });
+
+  // Place labels with extra center gap; y will be updated after categories are placed
+  cols.left[1].forEach(n=>n.x=-CENTER_GAP_X);
+  cols.right[1].forEach(n=>n.x=CENTER_GAP_X);
+  cols.center.forEach(n=>{ n.x=colX.center; n.y=0; });
+
+  // Place categories as separate vertical blocks with CATEGORY_GAP
+  function placeSide(side){
+    const cats = cols[side][2];
+    // Compute each category block height from channels and their expanded children
+    const blocks = cats.map(cat=>{
+      const chs = nodes.filter(n=>n.type==='channel' && n.parentId===cat.id);
+      let h = Math.max(CHANNEL_GAP, (chs.length-1)*CHANNEL_GAP + CHANNEL_GAP);
+      for (const ch of chs){
+        if (ch.expanded){
+          const years = nodes.filter(n=>n.type==='year' && n.parentId===ch.id);
+          let count = 0;
+          for (const yNode of years){
+            const months = nodes.filter(m=>m.type==='month' && m.parentId===yNode.id);
+            count += 1 + months.length;
+          }
+          h = Math.max(h, count*CHILD_GAP);
+        }
+      }
+      return {cat, chs, height:h};
+    });
+
+  // Total height and start y
+  const total = blocks.reduce((s,b)=> s + b.height, 0) + (blocks.length-1)*CATEGORY_GAP;
+  let y = -total/2;
+
+    // Place each block
+    for (const b of blocks){
+      // Place channels evenly within the block and collect their Y positions
+      const chSpan = (b.chs.length-1)*CHANNEL_GAP;
+      let cy = y + (b.height - chSpan)/2;
+      const chYs = [];
+      for (let i=0; i<b.chs.length; i++){
+        const ch = b.chs[i];
+        ch.x = colX[side][3];
+        ch.y = cy;
+        chYs.push(ch.y);
+
+        if (ch.expanded){
+          // Place years centered on the median of their months,
+          // and center the full children stack on ch.y
+          const years = nodes.filter(n=>n.type==='year' && n.parentId===ch.id);
+
+          // Build per-year stacks and compute each year stack height
+          const yearStacks = years.map(yNode=>{
+            const months = nodes
+              .filter(m=>m.type==='month' && m.parentId===yNode.id)
+              .sort((a,b)=> Number(a.label) - Number(b.label));
+            // group span is based only on months since months are centered around the year
+            const groupSpan = months.length > 1 ? (months.length - 1) * CHILD_GAP : 0;
+            return { yNode, months, groupSpan };
+          });
+
+          // Total span across years = sum of group spans + gaps between groups
+          const totalSpan = yearStacks.reduce((s,ys)=> s + ys.groupSpan, 0) + Math.max(0, (yearStacks.length - 1)) * CHILD_GAP;
+          let topY = ch.y - totalSpan / 2;
+
+          for (const ys of yearStacks){
+            // Center of this year+months stack
+            const yearY = topY + ys.groupSpan / 2;
+
+            // Position year node
+            ys.yNode.x = colX[side][4];
+            ys.yNode.y = yearY;
+
+            // Position months centered around the year:
+            // if odd count, middle month aligns with the year
+            // if even count, months straddle the year evenly
+            const mCount = ys.months.length;
+            for (let i=0; i<mCount; i++){
+              const m = ys.months[i];
+              const offset = (i - (mCount - 1)/2) * CHILD_GAP;
+              m.x = colX[side][5];
+              m.y = yearY + offset;
+            }
+
+            // Advance the topY for next year stack (leave one gap between stacks)
+            topY += ys.groupSpan + CHILD_GAP;
+          }
+        }
+        cy += CHANNEL_GAP;
+      }
+
+      // Center category on the median of its channels
+      b.cat.x = colX[side][2];
+      if (chYs.length){
+        const mid = Math.floor(chYs.length/2);
+        const sorted = [...chYs].sort((a,b)=>a-b);
+        b.cat.y = chYs.length % 2 === 1 ? sorted[mid] : (sorted[mid-1] + sorted[mid]) / 2;
+      } else {
+        b.cat.y = y + b.height/2;
+      }
+
+      // Move to next block
+      y += b.height + CATEGORY_GAP;
+    }
+
+    // Center label (level 1) over its categories
+    const label = cols[side][1][0];
+    if (label){
+      const minY = Math.min(...cats.map(c=>c.y));
+      const maxY = Math.max(...cats.map(c=>c.y));
+      label.y = (minY + maxY)/2;
+    }
+  }
+
+  placeSide('left');
+  placeSide('right');
+
+  // Root at midpoint of both labels
+  const root = byId.get('root');
+  const leftLabel = cols.left[1][0];
+  const rightLabel = cols.right[1][0];
+  root.x = 0;
+  root.y = ((leftLabel?leftLabel.y:0) + (rightLabel?rightLabel.y:0))/2;
+}
+
+function fitView(pad=90){
+  if (!nodes.length) return;
+  let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
+  for (const n of nodes){ minX=Math.min(minX,n.x-n.w/2); maxX=Math.max(maxX,n.x+n.w/2); minY=Math.min(minY,n.y-n.h/2); maxY=Math.max(maxY,n.y+n.h/2); }
+  const w=canvas.clientWidth,h=canvas.clientHeight;
+  const gw=(maxX-minX)+pad*2, gh=(maxY-minY)+pad*2;
+  const s = clamp(Math.min(w/gw, h/gh), 0.05, 3.5);
+  scale=s; tx=(w - (minX+maxX)*s)/2; ty=(h - (minY+maxY)*s)/2; draw();
+}
+function resetView(){ scale=1; tx=canvas.clientWidth/2; ty=canvas.clientHeight/2; draw(); }
+
+/* ================== DRAW ================== */
+function drawGrid(){
+  const w=canvas.clientWidth, h=canvas.clientHeight;
+  // Vaporwave gradient background
+  const grad = ctx.createLinearGradient(0,0,w,h);
+  grad.addColorStop(0, COLORS.bgGradient1);
+  grad.addColorStop(1, COLORS.bgGradient2);
+  ctx.fillStyle = grad;
+  ctx.fillRect(0,0,w,h);
+  // CRT scanlines
+  ctx.save();
+  ctx.globalAlpha = 0.08;
+  ctx.fillStyle = '#fff';
+  for(let y=0;y<h;y+=3){ctx.fillRect(0,y,w,1);}
+  ctx.restore();
+  // Vaporwave grid
+  ctx.save(); ctx.translate(tx,ty); ctx.scale(scale,scale);
+  ctx.beginPath();
+  const step=80;
+  for (let x=-6000;x<=6000;x+=step){ ctx.moveTo(x,-6000); ctx.lineTo(x,6000); }
+  for (let y=-6000;y<=6000;y+=step){ ctx.moveTo(-6000,y); ctx.lineTo(6000,y); }
+  ctx.lineWidth=1/scale; ctx.strokeStyle=COLORS.grid; ctx.stroke();
+  ctx.restore();
+}
+function roundRect(x,y,w,h,r){ const hw=w/2, hh=h/2, x0=x-hw, y0=y-hh, x1=x+hw, y1=y+hh;
+  ctx.beginPath(); ctx.moveTo(x0+r,y0); ctx.lineTo(x1-r,y0); ctx.quadraticCurveTo(x1,y0,x1,y0+r);
+  ctx.lineTo(x1,y1-r); ctx.quadraticCurveTo(x1,y1,x1-r,y1); ctx.lineTo(x0+r,y1);
+  ctx.quadraticCurveTo(x0,y1,x0,y1-r); ctx.lineTo(x0,y0+r); ctx.quadraticCurveTo(x0,y0,x0+r,y0);
+}
+function draw(){
+  const nowTS = performance.now();
+  drawGrid();
+  ctx.save(); ctx.translate(tx,ty); ctx.scale(scale,scale);
+
+  // Curved glowing links with animated flow
+  ctx.save();
+  ctx.shadowColor = COLORS.link;
+  ctx.shadowBlur = 10/scale;
+  const lineBase = Math.max(2/scale, 1/scale);
+  ctx.lineWidth = lineBase;
+  for (const L of links){
+    const a = byId.get(L.a), b = byId.get(L.b); if(!a || !b) continue;
+    const aop = a.opacity ?? 1, bop = b.opacity ?? 1;
+    const aRight = a.side==='right';
+    const x0 = aRight ? (a.x + a.w/2) : (a.x - a.w/2);
+    const x1 = aRight ? (b.x - b.w/2) : (b.x + b.w/2);
+    const y0 = a.y, y1 = b.y;
+    // Bezier curve for vaporwave style — increase curvature
+    const cxPull = 100; // stronger curve
+    ctx.beginPath();
+    ctx.moveTo(x0, y0);
+    ctx.bezierCurveTo(
+      aRight ? x0+cxPull : x0-cxPull, y0,
+      aRight ? x1-cxPull : x1+cxPull, y1,
+      x1, y1
+    );
+    const isHL = (activeId===a.id || activeId===b.id);
+    ctx.strokeStyle = isHL ? COLORS.linkHL : COLORS.link;
+    ctx.globalAlpha = ((isHL ? 0.95 : 0.7) * Math.min(aop, bop));
+
+    // Flowing dash animation
+    const speed = 120; // px per second
+    const dashLen = 14/scale;
+    const gapLen = 10/scale;
+    ctx.setLineDash([dashLen, gapLen]);
+    ctx.lineDashOffset = - (linkTime/1000) * speed;
+    ctx.stroke();
+
+    // Solid underlay to make it glow nicer
+    ctx.setLineDash([]);
+    ctx.globalAlpha *= 0.35;
+    ctx.lineWidth = lineBase * 1.6;
+    ctx.stroke();
+    ctx.lineWidth = lineBase;
+  }
+  ctx.restore();
+
+  // nodes
+  ctx.font = NODE.font; ctx.textAlign='center'; ctx.textBaseline='middle';
+  for (const n of nodes){
+    const op = n.opacity ?? 1;
+    const active = n.id===activeId;
+    // Neon gradient node background
+    const grad = ctx.createLinearGradient(n.x-n.w/2, n.y-n.h/2, n.x+n.w/2, n.y+n.h/2);
+    grad.addColorStop(0, COLORS.nodeGradient1);
+    grad.addColorStop(1, COLORS.nodeGradient2);
+    ctx.save();
+    // Glow
+    ctx.shadowColor = active ? COLORS.nodeGlowHL : COLORS.nodeGlow;
+    ctx.shadowBlur = active ? 32/scale : 16/scale;
+    ctx.globalAlpha = op;
+    // Optional holographic twitch
+    if (n._glitch){
+      const g = n._glitch;
+      const total = g.dur + (g.tail||0);
+      const t = Math.min(1, Math.max(0, (nowTS - g.start) / total));
+      // Ease-out for smoother end
+      const k = 1 - Math.pow(1 - t, 3);
+      const fade = 1 - t;
+      const jitter = (g.intensity||6) * fade;
+      // Three RGB shifted passes
+  const baseA1 = 0.55 * fade * GLITCH_BOOST, baseA2 = 0.55 * fade * GLITCH_BOOST, baseA3 = 0.35 * fade * GLITCH_BOOST;
+      const shifts = [
+        {dx:  jitter, dy: -jitter*0.5, color: `rgba(255,80,200,${baseA1})`},
+        {dx: -jitter*0.6, dy: jitter*0.4, color: `rgba(80,240,255,${baseA2})`},
+        {dx:  jitter*0.2, dy: jitter*0.9, color: `rgba(255,255,255,${baseA3})`}
+      ];
+      for (const s of shifts){
+        ctx.save();
+        ctx.translate(s.dx, s.dy);
+        ctx.fillStyle = s.color;
+        roundRect(n.x,n.y,n.w,n.h,NODE.radius);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+    ctx.fillStyle = grad;
+    roundRect(n.x,n.y,n.w,n.h,NODE.radius);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    // Node border
+    ctx.lineWidth = active ? 3/scale : 2/scale;
+    ctx.strokeStyle = active ? COLORS.nodeStrokeHL : COLORS.nodeStroke;
+    roundRect(n.x,n.y,n.w,n.h,NODE.radius);
+    ctx.stroke();
+    ctx.restore();
+  // ...removed side stripe...
+    // label
+    ctx.save();
+    ctx.shadowColor = active ? COLORS.nodeGlowHL : COLORS.nodeGlow;
+    ctx.shadowBlur = active ? 16/scale : 8/scale;
+    ctx.fillStyle = COLORS.text;
+    ctx.globalAlpha = op;
+    if (n._glitch){
+      const g = n._glitch;
+      const total = g.dur + (g.tail||0);
+      const t = Math.min(1, Math.max(0, (nowTS - g.start) / total));
+      const fade = 1 - t;
+  const jitter = (g.intensity||6) * fade * GLITCH_BOOST;
+  const a1 = 0.9 * fade * GLITCH_BOOST, a2 = 0.9 * fade * GLITCH_BOOST;
+      ctx.save(); ctx.translate( jitter, -jitter*0.5); ctx.fillStyle=`rgba(255,80,200,${a1})`; ctx.fillText(n.label, n.x, n.y); ctx.restore();
+      ctx.save(); ctx.translate(-jitter*0.6,  jitter*0.4); ctx.fillStyle=`rgba(80,240,255,${a2})`; ctx.fillText(n.label, n.x, n.y); ctx.restore();
+    }
+    ctx.fillText(n.label, n.x, n.y);
+    ctx.restore();
+  }
+  ctx.restore();
+}
+
+/* ================== INTERACTION ================== */
+canvas.addEventListener('mousedown', e=>{
+  const r=canvas.getBoundingClientRect(), mx=e.clientX-r.left, my=e.clientY-r.top; last={x:mx,y:my};
+  const w=toWorld(mx,my), n=pickNode(w.x,w.y);
+  if (n){ activeId=n.id; panning=false; } else { panning=true; }
+  draw();
+});
+addEventListener('mousemove', e=>{
+  if (!panning) return;
+  const r=canvas.getBoundingClientRect(), mx=e.clientX-r.left, my=e.clientY-r.top;
+  tx += (mx-last.x); ty += (my-last.y); last={x:mx,y:my};
+  draw();
+});
+addEventListener('mouseup', ()=>{ panning=false; });
+canvas.addEventListener('wheel', e=>{
+  e.preventDefault();
+  const r=canvas.getBoundingClientRect(), mx=e.clientX-r.left, my=e.clientY-r.top;
+  const before=toWorld(mx,my), f=Math.exp(-e.deltaY*0.0015), ns=clamp(scale*f, 0.1, 4);
+  tx = mx - before.x*ns; ty = my - before.y*ns; scale=ns; draw();
+},{passive:false});
+canvas.addEventListener('click', e=>{
+  const r=canvas.getBoundingClientRect(), mx=e.clientX-r.left, my=e.clientY-r.top;
+  const w=toWorld(mx,my), n=pickNode(w.x,w.y); if(!n) return;
+  if (n.type==='channel'){
+    activeId=n.id;
+    toggleExpandChannel(n);
+    ensureAnimLoop();
+  } else {
+    activeId=n.id; draw();
+  }
+});
+addEventListener('keydown', e=>{ if(e.key==='f'||e.key==='F') fitView(); if(e.key==='0') resetView(); });
+document.getElementById('fitBtn').onclick = ()=>fitView();
+document.getElementById('resetBtn').onclick = ()=>resetView();
+
+function pickNode(wx,wy){
+  for (let i=nodes.length-1;i>=0;i--){
+    const n=nodes[i];
+    if (wx>=n.x-n.w/2 && wx<=n.x+n.w/2 && wy>=n.y-n.h/2 && wy<=n.y+n.h/2) return n;
+  }
+  return null;
+}
+
+/* ================== BOOT: use embedded JSON ================== */
+function loadArchive(){
+  try{
+    const raw = ARCHIVE_DATA;
+    buildBase(raw);
+    layout();
+    resize();
+    setTimeout(()=>fitView(), 0);
+  }catch(err){
+    console.error('Failed to load archive JSON:', err);
+    alert('Failed to load archive JSON (embedded).');
+  }
+}
+loadArchive();
+</script>
+</body>
+</html>
